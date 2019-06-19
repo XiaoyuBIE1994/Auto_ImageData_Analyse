@@ -1,6 +1,6 @@
 ## Automatic Image data analyse
 
-This project aims at analysing data in case that we can not obtain the original data but only the output image, we use color mask to choose data points, RANSAC to fit line and OCR to find coordinate, the result is like:
+This project aims at analysing data in case that we can not obtain the original data but only the copy of image plot, we use color mask to choose data points, RANSAC to fit line and OCR to find coordinate, the result is like:
 
 ![](https://github.com/XiaoyuBIE1994/Auto_ImageData_Analyse/blob/master/Result_example.png)
 
