@@ -24,3 +24,4 @@ The second point is: (1930.488, 1.71)
 
 =============Finish=============
 
+It also provide an interaction command to rectify OCR result or re-run RANSAC
