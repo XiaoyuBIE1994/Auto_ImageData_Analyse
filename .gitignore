@@ -1,4 +1,11 @@
+Data/
+Abandon/
+Archive/
+Processed/
 
-*.PNG
+__pycache__/
+.ipynb_checkpoints/
 
+.ipynb*
+*xlsx
 *csv
