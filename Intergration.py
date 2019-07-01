@@ -80,19 +80,24 @@ def model_run (file, debug_params, mask_params, ransac_params, \
         try:
             model_ransac = RANSAC.line_ransac(X_new, y_new, ransac_params)
             dic_line_params = model_ransac.line_extraction_ransac()
-
-            k1 = dic_line_params["k1"]
-            b1 = dic_line_params["b1"]
-            k2 = dic_line_params["k2"]
-            b2 = dic_line_params["b2"]
+            
+            k1_list = dic_line_params["k1_list"]
+            b1_list = dic_line_params["b1_list"]
+            k2_list = dic_line_params["k2_list"]
+            b2_list = dic_line_params["b2_list"]
             x_cross = dic_line_params["x_cross"]
             y_cross = dic_line_params["y_cross"]
             if SHOW_RANSAC_LINE:
                 img_ransac = img.copy()
-                img_ransac = ImageProcess.draw_line_cv(img_ransac, k1, b1, line_width=1)
-                img_ransac = ImageProcess.draw_line_cv(img_ransac, k2, b2, line_width=1)
-                cv2.line(img_ransac, (int(x_cross), 0), (int(x_cross), img_ransac.shape[0]), (0,0,0), 1)
-                cv2.line(img_ransac, (0, int(y_cross)), (img_ransac.shape[1], int(y_cross)), (0,0,0), 1)
+                for i in range(len(k1_list)):
+                    k1 = k1_list[i]
+                    b1 = b1_list[i]
+                    k2 = k2_list[i]
+                    b2 = b2_list[i]
+                    img_ransac = ImageProcess.draw_line_cv(img_ransac, k1, b1, line_width=1)
+                    img_ransac = ImageProcess.draw_line_cv(img_ransac, k2, b2, line_width=1)
+#                cv2.line(img_ransac, (int(x_cross), 0), (int(x_cross), img_ransac.shape[0]), (0,0,0), 1)
+#                cv2.line(img_ransac, (0, int(y_cross)), (img_ransac.shape[1], int(y_cross)), (0,0,0), 1)
                 fig = plt.figure(figsize=(20,6))
                 fig.suptitle("RANSAC Image: {}".format(file_name))
                 #fig1 = plt.gcf()
@@ -208,6 +213,10 @@ def model_run (file, debug_params, mask_params, ransac_params, \
     result["x1"] = dic_coor["CoorX"][1]
     result["y0"] = dic_coor["CoorY"][0]
     result["y1"] = dic_coor["CoorY"][1]
+    result["k1_list"] = k1_list
+    result["b1_list"] = b1_list
+    result["k2_list"] = k2_list
+    result["b2_list"] = b2_list
     result["k1"] = '%0.3f'%k1
     result["b1"] = '%0.3f'%b1
     result["k2"] = '%0.3f'%k2

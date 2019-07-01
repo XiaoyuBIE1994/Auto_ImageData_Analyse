@@ -98,6 +98,10 @@ class line_ransac:
         x_cross = - (b1 - b2) / (k1 - k2)
         y_cross = k1 * x_cross + b1
         res = {}
+        res["k1_list"] = k1_list
+        res["b1_list"] = b1_list
+        res["k2_list"] = k2_list
+        res["b2_list"] = b2_list
         res["k1"] = k1
         res["b1"] = b1
         res["k2"] = k2
