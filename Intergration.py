@@ -24,6 +24,8 @@ def model_run (file, debug_params, mask_params, ransac_params, \
     SHOW_RANSAC_LINE = debug_params['SHOW_RANSAC_LINE']
     CHECK_RESULT = debug_params['CHECK_RESULT']
     SHOW_RESULT = debug_params['SHOW_RESULT']
+    RANSAC_ITER = debug_params["RANSAC_ITER"]
+    STAT_ACC = debug_params["STAT_ACC"]
     
     # Image pre-processing parameters 
     data_color_mask = mask_params['color_mask']
@@ -76,7 +78,7 @@ def model_run (file, debug_params, mask_params, ransac_params, \
             
     # RANSAC line extraction
     loop_ransac = True
-    loop_iteration = 10
+    loop_iteration = RANSAC_ITER
     while loop_ransac:
         try:
             k1_list = []
@@ -203,6 +205,8 @@ def model_run (file, debug_params, mask_params, ransac_params, \
     for i in range(len(intersection_list)):
         x_cross = intersection_list[i][0]
         y_cross = intersection_list[i][1]
+        k2 = k2_list[i]
+        b2 = b2_list[i]
         pt1_x = (x_cross - pt_orig[0]) * scale_x
         pt1_y = (pt_orig[1] - y_cross) * scale_y + float(dic_coor["CoorY"][0])
         pt2_y = float(peak_value)
@@ -217,14 +221,14 @@ def model_run (file, debug_params, mask_params, ransac_params, \
         pt1_list.append(pt1)
         pt2_list.append(pt2)
     
-    pt1_x_mean = np.mean(pt1_x_list)
-    pt1_y_mean = np.mean(pt1_y_list)
-    pt2_x_mean = np.mean(pt2_x_list)
-    pt2_y_mean = np.mean(pt2_y_list)
-    pt1_x_var = np.mean(pt1_x_list)
-    pt1_y_var = np.mean(pt1_y_list)
-    pt2_x_var = np.mean(pt2_x_list)
-    pt2_y_var = np.mean(pt2_y_list)
+    pt1_x_mean = round(np.mean(pt1_x_list), STAT_ACC)
+    pt1_y_mean = round(np.mean(pt1_y_list), STAT_ACC)
+    pt2_x_mean = round(np.mean(pt2_x_list), STAT_ACC)
+    pt2_y_mean = round(np.mean(pt2_y_list), STAT_ACC)
+    pt1_x_var = round(np.var(pt1_x_list), STAT_ACC)
+    pt1_y_var = round(np.var(pt1_y_list), STAT_ACC)
+    pt2_x_var = round(np.var(pt2_x_list), STAT_ACC)
+    pt2_y_var = round(np.var(pt2_y_list), STAT_ACC)
     
 #    print("INFO: first intersection points (in real scale) are:\n {}".format(pt1_list))
 #    print("INFO: second intersection points (in real scale) are:\n {}".format(pt2_list))
@@ -269,5 +273,13 @@ def model_run (file, debug_params, mask_params, ransac_params, \
     result["pt2_y"] = pt2_y
     result["pt1_list"] = pt1_list
     result["pt2_list"] = pt2_list
-    
+    result["pt1_x_mean"] = pt1_x_mean
+    result["pt1_y_mean"] = pt1_y_mean
+    result["pt2_x_mean"] = pt2_x_mean
+    result["pt2_y_mean"] = pt2_y_mean
+    result["pt1_x_var"] = pt1_x_var 
+    result["pt1_y_var"] = pt1_y_var 
+    result["pt2_x_var"] = pt2_x_var 
+    result["pt2_y_var"] = pt2_y_var 
+
     return result

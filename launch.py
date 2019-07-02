@@ -3,6 +3,7 @@
 import os
 import shutil
 import numpy as np
+import pandas as pd
 import Exchange
 import Intergration
 from IPython.display import clear_output
@@ -41,6 +42,8 @@ def launch(config_path = os.getcwd()):
     debug_params['CHECK_RESULT'] = cfg.getboolean('debug parameters', 'CHECK_RESULT')
     debug_params['MODE_CHECK'] = cfg.getboolean('debug parameters', 'MODE_CHECK')
     debug_params['SHOW_RESULT'] = cfg.getboolean('debug parameters', 'SHOW_RESULT')
+    debug_params["RANSAC_ITER"] = cfg.getint("debug parameters", "RANSAC_ITER")
+    debug_params["STAT_ACC"] = cfg.getint("debug parameters", "STAT_ACC")
     
     mask_params['color_mask'] = list(map(int, cfg['mask parameters']['color_mask'].split(' ')))
     mask_params['start_ratio'] = cfg.getfloat('mask parameters', 'start_ratio')
@@ -104,6 +107,22 @@ def launch(config_path = os.getcwd()):
     
     # read peak value
     peak_value_table = Exchange.import_peak(work_dir)
+
+    # create RANSAC tolerance Excel
+    RANSAC_analyse_path = os.path.join(work_dir, "RANSAC_analyse.xls")
+    excel_dir = {}
+    excel_dir["Image"] = []
+    excel_dir["pt1_x_mean"] = []
+    excel_dir["pt1_y_mean"] = []
+    excel_dir["pt1_x_acc(%)"] = []
+    excel_dir["pt1_y_acc(%)"] = []
+    excel_dir["pt2_x_mean"] = []
+    excel_dir["pt2_y_mean"] = []
+    excel_dir["pt2_x_acc(%)"] = []
+    excel_dir["pt2_y_acc(%)"] = []
+    columns_list = ["Image", "pt1_x_mean", "pt1_y_mean", "pt1_x_acc(%)", "pt1_y_acc(%)", \
+                    "pt2_x_mean", "pt2_y_mean", "pt2_x_acc(%)", "pt2_y_acc(%)"]
+
     
     # loop for image recognition
     result_dir = {}
@@ -129,6 +148,8 @@ def launch(config_path = os.getcwd()):
                     data_in = input("Error: Auto detection fail, press E to exit, others to continue")
                     if data_in == "E":
                         clear_output()
+                        df = pd.DataFrame(excel_dir, columns=columns_list)
+                        df.to_excel(RANSAC_analyse_path)
                         return result_dir
                     else:
                         clear_output()
@@ -136,12 +157,31 @@ def launch(config_path = os.getcwd()):
 
                 data_in = input("E: exit, S: save and exit, A: abandon result, others: continue\n")
                 if data_in == "E":
+                    df = pd.DataFrame(excel_dir, columns=columns_list)
+                    df.to_excel(RANSAC_analyse_path)
                     return result_dir
                 elif data_in == "S":
                     result_dir[filename[:-4]] = result
                     Exchange.export_result(filename, work_dir, result)
                     copy_path = os.path.join(processed_dir, file)
                     shutil.move(imagepath, copy_path)
+
+                    pt1_x_accurancy = 100 * result["pt1_x_var"] / result["pt1_x_mean"]
+                    pt1_y_accurancy = 100 * result["pt1_y_var"] / result["pt1_y_mean"]
+                    pt2_x_accurancy = 100 * result["pt2_x_var"] / result["pt2_x_mean"]
+                    pt2_y_accurancy = 100 * result["pt2_y_var"] / result["pt2_y_mean"]
+                    excel_dir["Image"].append(filename)
+                    excel_dir["pt1_x_mean"].append(result["pt1_x_mean"])
+                    excel_dir["pt1_y_mean"].append(result["pt1_y_mean"])
+                    excel_dir["pt1_x_acc(%)"].append(pt1_x_accurancy)
+                    excel_dir["pt1_y_acc(%)"].append(pt1_y_accurancy)
+                    excel_dir["pt2_x_mean"].append(result["pt2_x_mean"])
+                    excel_dir["pt2_y_mean"].append(result["pt2_y_mean"])
+                    excel_dir["pt2_x_acc(%)"].append(pt2_x_accurancy)
+                    excel_dir["pt2_y_acc(%)"].append(pt2_y_accurancy)
+                    df = pd.DataFrame(excel_dir, columns=columns_list)
+                    df.to_excel(RANSAC_analyse_path)
+
                     return result_dir
                 elif data_in == "A":
                     result_dir = {}
@@ -149,6 +189,21 @@ def launch(config_path = os.getcwd()):
 #                     shutil.copy(imagepath, copy_path)
                     shutil.move(imagepath, copy_path)
                 else:
+
+                    pt1_x_accurancy = 100 * result["pt1_x_var"] / result["pt1_x_mean"]
+                    pt1_y_accurancy = 100 * result["pt1_y_var"] / result["pt1_y_mean"]
+                    pt2_x_accurancy = 100 * result["pt2_x_var"] / result["pt2_x_mean"]
+                    pt2_y_accurancy = 100 * result["pt2_y_var"] / result["pt2_y_mean"]
+                    excel_dir["Image"].append(filename)
+                    excel_dir["pt1_x_mean"].append(result["pt1_x_mean"])
+                    excel_dir["pt1_y_mean"].append(result["pt1_y_mean"])
+                    excel_dir["pt1_x_acc(%)"].append(pt1_x_accurancy)
+                    excel_dir["pt1_y_acc(%)"].append(pt1_y_accurancy)
+                    excel_dir["pt2_x_mean"].append(result["pt2_x_mean"])
+                    excel_dir["pt2_y_mean"].append(result["pt2_y_mean"])
+                    excel_dir["pt2_x_acc(%)"].append(pt2_x_accurancy)
+                    excel_dir["pt2_y_acc(%)"].append(pt2_y_accurancy)
+
                     Exchange.export_result(filename, work_dir, result)
                     result_dir[filename[:-4]] = result
                     copy_path = os.path.join(processed_dir, file)
