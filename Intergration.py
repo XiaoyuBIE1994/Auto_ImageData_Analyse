@@ -76,33 +76,44 @@ def model_run (file, debug_params, mask_params, ransac_params, \
             
     # RANSAC line extraction
     loop_ransac = True
+    loop_iteration = 10
     while loop_ransac:
         try:
-            model_ransac = RANSAC.line_ransac(X_new, y_new, ransac_params)
-            dic_line_params = model_ransac.line_extraction_ransac()
+            k1_list = []
+            b1_list = []
+            k2_list = []
+            b2_list = []
+            intersection_list = []
+            img_ransac = img.copy()
+            for i in range(loop_iteration):
+                model_ransac = RANSAC.line_ransac(X_new, y_new, ransac_params)
+                dic_line_params = model_ransac.line_extraction_ransac()
             
-            k1_list = dic_line_params["k1_list"]
-            b1_list = dic_line_params["b1_list"]
-            k2_list = dic_line_params["k2_list"]
-            b2_list = dic_line_params["b2_list"]
-            x_cross = dic_line_params["x_cross"]
-            y_cross = dic_line_params["y_cross"]
-            if SHOW_RANSAC_LINE:
-                img_ransac = img.copy()
-                for i in range(len(k1_list)):
-                    k1 = k1_list[i]
-                    b1 = b1_list[i]
-                    k2 = k2_list[i]
-                    b2 = b2_list[i]
+                k1 = dic_line_params["k1"]
+                b1 = dic_line_params["b1"]
+                k2 = dic_line_params["k2"]
+                b2 = dic_line_params["b2"]
+                x_cross = dic_line_params["x_cross"]
+                y_cross = dic_line_params["y_cross"]
+                k1_list.append(k1)
+                b1_list.append(b1)
+                k2_list.append(k2)
+                b2_list.append(b2)
+                intersection_list.append((x_cross, y_cross))
+                if SHOW_RANSAC_LINE:
+#                    img_ransac = img.copy()
                     img_ransac = ImageProcess.draw_line_cv(img_ransac, k1, b1, line_width=1)
                     img_ransac = ImageProcess.draw_line_cv(img_ransac, k2, b2, line_width=1)
-#                cv2.line(img_ransac, (int(x_cross), 0), (int(x_cross), img_ransac.shape[0]), (0,0,0), 1)
-#                cv2.line(img_ransac, (0, int(y_cross)), (img_ransac.shape[1], int(y_cross)), (0,0,0), 1)
+    #                cv2.line(img_ransac, (int(x_cross), 0), (int(x_cross), img_ransac.shape[0]), (0,0,0), 1)
+    #                cv2.line(img_ransac, (0, int(y_cross)), (img_ransac.shape[1], int(y_cross)), (0,0,0), 1)
+            if SHOW_RANSAC_LINE:        
                 fig = plt.figure(figsize=(20,6))
                 fig.suptitle("RANSAC Image: {}".format(file_name))
                 #fig1 = plt.gcf()
                 plt.imshow(img_ransac)
                 plt.show()
+            print("INFO: {} RANSAC iteration finished".format(loop_iteration))
+#            print("INFO: intersection points (in pixel) in {} iteration are:\n {}".format(loop_iteration, intersection_list))
             data_in = input("R: rerun, others: continue")
             if data_in == "R":
                 clear_output()
@@ -182,13 +193,44 @@ def model_run (file, debug_params, mask_params, ransac_params, \
         
     scale_x = dic_scale["scale_X"]
     scale_y = dic_scale["scale_y"]
-    pt1_x = (x_cross - pt_orig[0]) * scale_x
-    pt1_y = (pt_orig[1] - y_cross) * scale_y + float(dic_coor["CoorY"][0])
-    pt2_y = float(peak_value)
-    y_pix = int(pt_orig[1] - (pt2_y - float(dic_coor["CoorY"][0])) / scale_y)
-    pt2_x = ((y_pix - b2)/k2 - pt_orig[0]) * scale_x
-    pt1 = (pt1_x, pt1_y)
-    pt2= (pt2_x, pt2_y)
+    pt1_list = []
+    pt2_list = []
+    pt1_x_list = []
+    pt1_y_list = []
+    pt2_x_list = []
+    pt2_y_list = []
+    
+    for i in range(len(intersection_list)):
+        x_cross = intersection_list[i][0]
+        y_cross = intersection_list[i][1]
+        pt1_x = (x_cross - pt_orig[0]) * scale_x
+        pt1_y = (pt_orig[1] - y_cross) * scale_y + float(dic_coor["CoorY"][0])
+        pt2_y = float(peak_value)
+        y_pix = int(pt_orig[1] - (pt2_y - float(dic_coor["CoorY"][0])) / scale_y)
+        pt2_x = ((y_pix - b2)/k2 - pt_orig[0]) * scale_x
+        pt1 = (pt1_x, pt1_y)
+        pt2= (pt2_x, pt2_y)
+        pt1_x_list.append(pt1_x)
+        pt1_y_list.append(pt1_y)
+        pt2_x_list.append(pt2_x)
+        pt2_y_list.append(pt2_y)
+        pt1_list.append(pt1)
+        pt2_list.append(pt2)
+    
+    pt1_x_mean = np.mean(pt1_x_list)
+    pt1_y_mean = np.mean(pt1_y_list)
+    pt2_x_mean = np.mean(pt2_x_list)
+    pt2_y_mean = np.mean(pt2_y_list)
+    pt1_x_var = np.mean(pt1_x_list)
+    pt1_y_var = np.mean(pt1_y_list)
+    pt2_x_var = np.mean(pt2_x_list)
+    pt2_y_var = np.mean(pt2_y_list)
+    
+#    print("INFO: first intersection points (in real scale) are:\n {}".format(pt1_list))
+#    print("INFO: second intersection points (in real scale) are:\n {}".format(pt2_list))
+    print("INFO: The mean and variance for the first intersection point are:{} and {}".format((pt1_x_mean, pt1_y_mean), (pt1_x_var, pt1_y_var)))
+    print("INFO: The mean and variance for the second intersection point are:{} and {}".format((pt2_x_mean, pt2_y_mean), (pt2_x_var, pt2_y_var)))    
+
     
     if SHOW_RESULT:
         print("=============Resualt=============")
@@ -225,5 +267,7 @@ def model_run (file, debug_params, mask_params, ransac_params, \
     result["pt1_y"] = pt1_y
     result["pt2_x"] = pt2_x
     result["pt2_y"] = pt2_y
+    result["pt1_list"] = pt1_list
+    result["pt2_list"] = pt2_list
     
     return result
